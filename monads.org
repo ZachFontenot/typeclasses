@@ -1,0 +1,219 @@
+* What is a Typeclass? *
+
+TLDR: *Data Structures grouped with Functions*
+
+Namely Higher Kinded Types that provide a generic interface to think about many different Types.
+What do Lists, Promises, Nullables, Streams, etc... have in common? That's the /STUFF/ we'll be talking about.
+
+A means of supporting parametric polymorphism. i.e. Functions that accept many different types as arguments.
+
+The most basic being
+#+BEGIN_SRC haskell
+  class Eq a where
+    (==) :: a -> a -> Bool
+    (/=) :: a -> a -> Bool
+#+END_SRC
+
+We can think of this as similar to a Java class's default =equals()= method. 
+* Monoid *
+
+
+A Monoid in Set Theory is a Set with a closed binary operator and an identity element.
+A Semigroup is a Set with a closed binary operator.
+** Haskell Monoid **
+
+#+BEGIN_SRC haskell
+  class Semigroup m where
+    (<>) :: m -> m -> m
+
+    -- defining sconcat is unnecessary, it has a default implementation
+    sconcat :: NonEmpty m -> m
+    sconcat = ...
+
+    -- defining stimes is unnecessary, it has a default implementation
+    stimes :: Integral a => a -> m -> m
+    stimes = ...
+
+  class Semigroup m => Monoid m where
+      mempty :: m
+
+    -- defining mappend is unnecessary, it copies from Semigroup
+      mappend :: m -> m -> m
+      mappend = (<>)
+
+    -- defining mconcat is optional, since it has the following default:
+    mconcat :: [m] -> m
+    mconcat = foldr mappend mempty
+
+  newtype Sum n = Sum n
+
+  instance Monoid (Sum n) where
+    mempty = 0
+    mappend = (+)
+
+  instance Monoid String where
+    mempty = ""
+    mappend = (++)
+
+    mconcat [(Sum 1), (Sum 2)] -- => (Sum 3)
+    "Hello" <> " world!" -- => "Hello world!"
+#+END_SRC
+
+** Typescript Monoid **
+
+#+BEGIN_SRC typescript
+  // An algebraic group with a single binary operator
+  export interface Magma<A> {
+      readonly concat: (x: A, y: A) => A
+  }
+  // A Magma where the binop is associative. (a -> b) -> c = a -> (b -> c)
+  export interface Semigroup<A> extends Magma<A> { }
+
+  // A Semigroup with an identity element. -- [] for Array, 0 for Sum, 1 for Product, etc.
+  export interface Monoid<A> extends Semigroup<A> {
+    readonly empty: A
+  }
+#+END_SRC
+
+** Example for URLS **
+
+#+BEGIN_SRC typescript
+  const join = (sep: string) => (items: string[]) =>
+    intercalate(monoidString, array)(sep, items)
+
+  const Url: Monoid<string> = {
+    empty: '',
+    concat: (left, right) => pipe(
+      [left, right],
+      A.map(trimSlash),
+      A.compact,
+      join('/')
+    )
+  }
+
+  Url.concat('https://newsapi.org/', '/v2/') // => https://newsapi.org/v2
+  Url.concat('https://newsapi.org/', '') // => https://newsapi.org
+#+END_SRC
+
+
+
+* Functor *
+
+
+** Haskell Functor **
+#+BEGIN_SRC haskell
+  class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+
+  data Maybe a = Just a | Nothing
+  data Either a b = Left a | Right b
+
+  instance Functor Maybe where
+    fmap g (Just a) = Just (g a)
+    fmap _ Nothing = Nothing
+
+  fmap (+1) [1, 2, 3] -- => [2, 3, 4]
+  fmap (*2) (Just 3) -- => Just 6
+  fmap (*4) Nothing -- => Nothing
+#+END_SRC
+
+** Typescript Functor **
+#+BEGIN_SRC typescript
+  export interface Functor<F> {
+    readonly URI: F
+    readonly map: <A, B>(fa: HKT<F, A>, f: (a: A) => B) => HKT<F, B> // f a
+  }
+
+  type Option<A> = None | Some<A> // None and Some<A> are a tagged union
+  type Either<E, A> = Left<E> | Right<A> // E is the error type which does not get transformed, see map
+
+  // map((x) => x + 1)([1,2,3]) Functions are all curried.
+  export const map: <A, B>(f: (a: A) => B) => (fa: A[]) => B[] = (f) => (fa) =>
+    fa.map((a) => f(a))
+
+  export const map: <A, B>(f: (a: A) => B) => (fa: Option<A>) => Option<B> = (f) => (fa) =>
+    isNone(fa) ? none : some(f(fa.value))
+
+  // Either Map
+  export const map: <A, B>(f: (a: A) => B) => <E>(fa: Either<E, A>) => Either<E, B> = (f) => (fa) =>
+    isLeft(fa) ? fa : right(f(fa.right))
+#+END_SRC
+
+* Monad *
+
+"All told, a monad in X is just a monoid in the category of endofunctors of X,
+with product × replaced by composition of endofunctors and unit set by the identity endofunctor."
+
+Things that are Monads that you may not know.
+Promises -> JS
+LINQ -> C#
+Streams -> Java
+
+** Haskell Monad **
+
+#+BEGIN_SRC haskell
+  class Applicative m => Monad m where
+    return :: a -> m a -- Puts a value into a context.
+    (>>=)  :: m a -> (a -> m b) -> m b
+    -- also bind
+    (>>)   :: m a -> m b -> m b -- discard first thing
+    m >> n = m >>= \_ -> n
+
+  instance Monad Maybe where
+    return :: a -> Maybe a
+    return = Just
+
+    (>>=) :: Maybe a -> (a -> Maybe b) -> Maybe b
+    (Just x) >>= g = g x -- {:just, 1}, {:nothing}
+    Nothing  >>= _ = nothing
+
+  lastName :: String -> Maybe String
+    ...
+
+  -- bind (Just "Zachary Fontenot") lastName
+  (Just "Zachary Fontenot") >>= lastName
+    -- => (Just "Fontenot")
+
+  Nothing >>= lastName
+  (Just "Zach") >>= lastName
+    -- => Nothing
+#+END_SRC
+
+** Even Parsers can be Monadic **
+#+BEGIN_SRC haskell
+  parseSave :: Parser Command -- IO () 
+  parseSave = do
+      Megaparsec.string "save"
+
+      Megaparsec.space1
+
+      file <- Megaparsec.takeWhile1P Nothing (not . Char.isSpace)
+
+      Megaparsec.space1
+
+      string <- Megaparsec.takeRest
+
+      return (Save file string)
+#+END_SRC
+
+** Typescript Monad **
+#+BEGIN_SRC typescript
+    export interface Apply<F> extends Functor<F> {
+      readonly ap: <A, B>(fab: HKT<F, (a: A) => B>, fa: HKT<F, A>) => HKT<F, B>
+    }
+
+    export interface Chain<F> extends Apply<F> {
+      readonly chain: <A, B>(fa: HKT<F, A>, f: (a: A) => HKT<F, B>) => HKT<F, B> // This is bind
+    }
+
+    export interface Applicative<F> extends Apply<F> {
+      readonly of: <A>(a: A) => HKT<F, A>
+    }
+
+    export interface Monad<F> extends Applicative<F>, Chain<F> { }
+#+END_SRC
+
+* References *
+- [[https://wiki.haskell.org/Typeclassopedia][Typeclassopedia by Brent Yorgey]]
+- [[https://gcanti.github.io/fp-ts/][fp-ts main page]]
+- [[https://github.com/ChuckJonas/spotify-fp-ts-example][Code I reworked for example]]
