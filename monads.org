@@ -1,4 +1,4 @@
-* What is a Typeclass? *
+* What is a Typeclass?
 
 TLDR: *Data Structures grouped with Functions*
 
@@ -15,12 +15,12 @@ The most basic being
 #+END_SRC
 
 We can think of this as similar to a Java class's default =equals()= method. 
-* Monoid *
+* Monoid
 
 
 A Monoid in Set Theory is a Set with a closed binary operator and an identity element.
 A Semigroup is a Set with a closed binary operator.
-** Haskell Monoid **
+** Haskell Monoid
 
 #+BEGIN_SRC haskell
   class Semigroup m where
@@ -59,7 +59,7 @@ A Semigroup is a Set with a closed binary operator.
     "Hello" <> " world!" -- => "Hello world!"
 #+END_SRC
 
-** Typescript Monoid **
+** Typescript Monoid
 
 #+BEGIN_SRC typescript
   // An algebraic group with a single binary operator
@@ -75,7 +75,7 @@ A Semigroup is a Set with a closed binary operator.
   }
 #+END_SRC
 
-** Example for URLS **
+** Example for URLS
 
 #+BEGIN_SRC typescript
   const join = (sep: string) => (items: string[]) =>
@@ -95,12 +95,10 @@ A Semigroup is a Set with a closed binary operator.
   Url.concat('https://newsapi.org/', '') // => https://newsapi.org
 #+END_SRC
 
+* Functor 
 
 
-* Functor *
-
-
-** Haskell Functor **
+** Haskell Functor
 #+BEGIN_SRC haskell
   class Functor f where
     fmap :: (a -> b) -> f a -> f b
@@ -117,7 +115,7 @@ A Semigroup is a Set with a closed binary operator.
   fmap (*4) Nothing -- => Nothing
 #+END_SRC
 
-** Typescript Functor **
+** Typescript Functor
 #+BEGIN_SRC typescript
   export interface Functor<F> {
     readonly URI: F
@@ -139,7 +137,7 @@ A Semigroup is a Set with a closed binary operator.
     isLeft(fa) ? fa : right(f(fa.right))
 #+END_SRC
 
-* Monad *
+* Monad
 
 "All told, a monad in X is just a monoid in the category of endofunctors of X,
 with product × replaced by composition of endofunctors and unit set by the identity endofunctor."
@@ -149,7 +147,7 @@ Promises -> JS
 LINQ -> C#
 Streams -> Java
 
-** Haskell Monad **
+** Haskell Monad
 
 #+BEGIN_SRC haskell
   class Applicative m => Monad m where
@@ -179,7 +177,7 @@ Streams -> Java
     -- => Nothing
 #+END_SRC
 
-** Even Parsers can be Monadic **
+** Even Parsers can be Monadic
 #+BEGIN_SRC haskell
   parseSave :: Parser Command -- IO () 
   parseSave = do
@@ -196,7 +194,7 @@ Streams -> Java
       return (Save file string)
 #+END_SRC
 
-** Typescript Monad **
+** Typescript Monad 
 #+BEGIN_SRC typescript
     export interface Apply<F> extends Functor<F> {
       readonly ap: <A, B>(fab: HKT<F, (a: A) => B>, fa: HKT<F, A>) => HKT<F, B>
@@ -213,7 +211,7 @@ Streams -> Java
     export interface Monad<F> extends Applicative<F>, Chain<F> { }
 #+END_SRC
 
-* References *
+* References
 - [[https://wiki.haskell.org/Typeclassopedia][Typeclassopedia by Brent Yorgey]]
 - [[https://gcanti.github.io/fp-ts/][fp-ts main page]]
 - [[https://github.com/ChuckJonas/spotify-fp-ts-example][Code I reworked for example]]
