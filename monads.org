@@ -143,9 +143,9 @@ A Semigroup is a Set with a closed binary operator.
 with product × replaced by composition of endofunctors and unit set by the identity endofunctor."
 
 Things that are Monads that you may not know.
-Promises -> JS
-LINQ -> C#
-Streams -> Java
+- Promises -> JS
+- LINQ -> C#
+- Streams -> Java
 
 ** Haskell Monad
 
