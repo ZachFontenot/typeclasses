@@ -215,3 +215,4 @@ Things that are Monads that you may not know.
 - [[https://wiki.haskell.org/Typeclassopedia][Typeclassopedia by Brent Yorgey]]
 - [[https://gcanti.github.io/fp-ts/][fp-ts main page]]
 - [[https://github.com/ChuckJonas/spotify-fp-ts-example][Code I reworked for example]]
+- [[https://github.com/witchcrafters/witchcraft][Dark Magic for Elixir]]
